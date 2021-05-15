@@ -1,0 +1,138 @@
+(* Functions *)
+
+data true/0.
+fun check/2.
+fun sign/2.
+fun decsign/2.
+fun verifysign/2.
+
+fun SK/1.
+fun VK/1.
+fun PK/1.
+
+fun equals/2.
+
+fun enc/3.
+fun dec/2.
+fun pet/3.
+
+(* ZK *)
+fun zk/2.
+fun zkver/1.
+fun public1/1.
+
+
+(* Equations *)
+
+equation equals(x,x) = true.
+
+equation dec(enc(x,PK(y),z), SK(y)) = x.
+
+equation decsign(sign(x,SK(y)), PK(y)) = x.
+equation verifysign(sign(x,SK(y)), x) = true.
+equation check(sign(x,y), VK(y)) = x.
+
+equation zkver(zk( (cred, r2, vote, r1), (enc(vote,PK(KT),r1), enc(cred,PK(KT),r2), PK(KT), va, vb, vc) )) = true.
+
+equation public1(zk(x,y)) = y.
+
+equation pet(enc(cred,PK(KT),r1), enc(cred,PK(KT),r2), KT) = true.
+
+
+(* Public Channel abstraction of "Bulletin Board" *)
+free pub.
+(* Public Tally Report *)
+free cVotes.
+(* Private Channel used by voters to choose candidate *)
+private free chvote.
+(* Candidate Slate 3 options *)
+free candA,candB,candC.
+(* Nonce Handshake Phase identifiers *)
+free n1,n2.
+
+(* Inalterability *)
+query evinj:ENDVOTE(v) ==> (evinj:BEGINVOTE(id,v) ==> evinj:STARTID(id) | evinj:STARTCORID(corvid)).
+
+(* Non-reusability *)
+query evinj:ENDVOTE(v) ==> (( (evinj:BEGINVOTE(id,v) ==> evinj:STARTID(id) & evinj:NEWID(id)) | (evinj:STARTCORID(corvid) ==> evinj:NEWID(id)) )).
+
+(* Eligibility *)
+query evinj:STARTID(id) ==> evinj:NEWID(id).
+query evinj:STARTCORID(id) ==> evinj:NEWID(id).
+
+
+let choosevote = 
+    out(chvote, candA) | out(chvote, candB) | out(chvote, candC).
+
+let voter =
+    new nonce1;
+    new nonce2;
+    out(chVR, (n1,nonce1));
+    out(cid, (n1,nonce2));
+    in(cid, (=n2,=nonce2,id));
+    event STARTID(id);
+    in(chVR, (=n2,=nonce1,cred));
+    in(chvote, vote);
+    event BEGINVOTE(vote,id);
+    new r1;
+    new r2;
+    out(pub, zk( (cred, r2, vote, r1), (enc(vote,PK(KT),r1), enc(cred,PK(KT),r2), PK(KT), candA, candB, candC) )).
+    
+    
+
+let corvoter =
+    new nonce1;
+    new nonce2;
+    out(chVR, (n1,nonce1));
+    out(cid, (n1,nonce2));
+    in(cid, (=n2,=nonce2,id));
+    event STARTCORID(id);
+    in(chVR, (=n2,=nonce1,cred));
+    out(pub, cred).
+ 
+let identityissuer =
+    in(cid, (=n1,nonce_voter));
+    in(chIR, (=n1,nonce_regis));
+    new id;
+    event NEWID(id);
+    out(cid, (n2,nonce_voter,id));
+    out(chIR, (n2,nonce_regis,id));
+    out(pub, id).
+    
+let registrar =
+    in(chVR,(=n1, nonce_voter));
+    in(chRT,(=n1, nonce_tally));
+    new nonce;
+    out(chIR, (n1,nonce));
+    in(chIR, (=n2,=nonce,id));
+    new cred;
+    new r;
+    out(chVR, (n2, nonce_voter, cred));
+    out(pub, sign(enc(cred, PK(KT), r), SK(KR)));
+    out(chRT, (n2, nonce_tally, enc(cred, PK(KT), r))).
+    
+
+let tallier =
+    new nonce;
+    out(chRT, (n1, nonce));
+    in(chRT, (=n2, =nonce, enccred));
+    in(pub, zkp);
+    if zkver(zkp) = true then
+    let (enccred1, encvote1, =PK(KT), =candA, =candB, =candC) = public1(zkp) in
+    if pet(enccred, enccred1, SK(KT)) = true then
+    let v = dec(encvote1, SK(KT)) in
+    event ENDVOTE(v);
+    out(cVotes, v).
+ 
+    
+process new KR; new KT;
+    new chVR;
+    new chid;
+    new chRT;
+    new chIR;
+    new cid;
+    out(pub, PK(KR));
+    out(pub, PK(KT));
+    ( !voter | !corvoter | !tallier | !registrar | !identityissuer | !choosevote )
+    
+

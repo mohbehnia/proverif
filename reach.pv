@@ -1,0 +1,16 @@
+(* Hello World Example for Reachability *)
+
+free c: channel.
+free secret_c:channel [private].
+
+free msg: bitstring [private].
+free secret_msg: bitstring [private].
+
+query attacker(msg).
+query attacker(secret_msg).
+
+process
+	out (c, msg);
+    out (secret_c, secret_msg);
+	0
+

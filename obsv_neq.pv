@@ -1,0 +1,10 @@
+(* Hello World Example for Observational Equivalence *)
+
+free cVotes: channel.
+free Barack: bitstring.
+free Donald: bitstring.
+
+process
+    out (cVotes, choice[Barack,Donald])
+
+    

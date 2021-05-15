@@ -1,0 +1,24 @@
+(* Hello World Example for Coorespondence Assertions *)
+
+free c: channel.
+free secret_c:channel [private].
+
+free msg: bitstring [private].
+free secret_msg: bitstring [private].
+
+event ev_msg.
+event ev_previous.
+
+query event(ev_msg).
+query event(ev_msg) ==> event(ev_previous).
+
+process
+	out (c, msg);
+    out (secret_c, secret_msg);
+	in (c, x:bitstring);
+    if x = secret_msg then
+        event ev_msg;
+        event ev_previous
+    else
+        event ev_previous
+

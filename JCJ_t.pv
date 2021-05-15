@@ -1,0 +1,251 @@
+type nonce.
+type cred.
+type vote.
+
+
+
+(* Modified El-Gamal Described in paper *)
+
+type skey.
+type pkey.
+
+fun pk(skey): pkey.
+fun mgenc(bitstring, pkey, nonce): bitstring.
+fun mgenc_cred(cred, pkey, nonce): bitstring.
+fun mgenc_vote(vote, pkey, nonce): bitstring.
+reduc forall v: vote, sk: skey, r:nonce; mgdec_vote(mgenc_vote(v, pk(sk), r), sk) = v.
+reduc forall m: bitstring, sk: skey, r:nonce; mgdec(mgenc(m, pk(sk), r), sk) = m.
+
+
+(* Signing Messages *)
+
+type sskey.
+type spkey.
+
+fun spk(sskey): spkey.
+fun sign(bitstring, sskey): bitstring.
+reduc forall m: bitstring, k: sskey; getmess(sign(m,k)) = m.
+reduc forall m: bitstring, k: sskey; checksign(sign(m,k), spk(k)) = m.
+fun verify(bitstring, bitstring, spkey):bool
+    reduc forall m: bitstring, k: sskey; verify(sign(m,k), m, spk(k)) = true
+    otherwise forall m1: bitstring, m2:bitstring, k: sskey; verify(sign(m1,k), m2, spk(k)) = false.
+
+
+
+(* ZK *)
+type zkp.
+type pf.
+
+type id.
+
+
+free vA:vote.
+free vB:vote.
+free vC:vote.
+
+type zpk.
+
+fun zk(cred, nonce, vote, nonce, bitstring, bitstring, pkey, vote, vote, vote, pf): zkp.
+
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public1(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = m1.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public2(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = m2.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public3(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = ipk.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public4(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = va.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public5(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = vb.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; public6(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = vc.
+
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, ipk:pkey, va:vote, vb:vote, vc:vote, p:pf; formula(zk(c,r1,v,r2,m1,m2,ipk,va,vb,vc,p)) = p.
+
+
+(*
+reduc forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, pk:pkey, va:vote, vb:vote, vc:vote; proof(c,r1,v,r2,m1,m2,pk,va,vb,vc) = band( band( eq(mgenc(c, pk, r1), m1), eq(mgenc(v, pk, r2), m2) ), bor(eq(v,vc), bor(eq(v,va),eq(v,vb))) )
+
+
+
+fun ver_zk(proof, zkp):bool
+    reduce forall c: cred, r1: nonce, v:vote, r2:nonce, m1:bitstring, m2:bitstring, pk:pkey, va:vote, vb:vote, vc:vote; ver_zk(proof(),zkp) = true. 
+
+
+
+    
+eq(mgenc(v, pk(sk), r1), b1)
+bor(eq(v,public6(zkp)), bor(eq(v,public4(zkp)),eq(v,public5(zkp))))
+
+
+fun public1()
+*)
+(* fun zk(cred,nonce,vote,nonce): (bitstring,bitstring,pkey).
+fun zkp(cred, nonce, vote, nonce): bitstring.
+fun checkzkp(bitstring, bitstring, bitstring): bitstring.
+
+fun zkpok(): bitstring.
+equation forall xid: bitstring, xr: bitstring, xv: bitstring, xpk: bitstring; checkzkp(zkp(xr, xid, xv, aenc(xpk, xr, xv)), xid, aenc(xpk, xr, xv)) = zkpok.
+
+eq(mgenc(v, pk(sk), r1), b1)
+bor(eq(v,vC), bor(eq(v,vA),eq(v,vB))) 
+
+fun zkp(cred, nonce, vote, nonce): bitstring.
+
+reduc forall m: bitstring, sk: skey, r:nonce; public1(zkp(cred, nonce, vote, nonce)) = m.
+
+
+define zkproof =
+land(
+or(or(eq(alpha2,beta1),eq(alpha2,beta2)),eq(alpha2,beta3)),
+sigver(alpha1,beta4,alpha2)).
+
+fun proof(cred, nonce, vote, nonce)
+
+*)
+
+(* Equational Theory *)
+
+(* Boolean *)
+fun eq(bitstring, bitstring):bool
+    reduc forall x:bitstring; eq(x,x) = true
+    otherwise forall x:bitstring, y:bitstring; eq(x,y) = false.
+    
+fun band(bool, bool):bool
+    reduc band(true,true) = true
+    otherwise forall x:bool, y:bool; band(x,y) = false.
+
+fun bor(bool, bool):bool
+    reduc forall x:bool; bor(x,true) = true
+    otherwise forall y:bool; bor(true,y) = true
+    otherwise forall x:bool, y:bool; bor(x,y) = false.
+
+fun pet(bitstring, bitstring, skey):bool
+    reduc forall m:bitstring, r1:nonce, r2:nonce, sk:skey; pet(mgenc(m, pk(sk), r1), mgenc(m, pk(sk), r2), sk) = true
+    otherwise forall m1:bitstring, m2:bitstring, r1:nonce, r2:nonce, sk:skey; pet(mgenc(m1, pk(sk), r1), mgenc(m2, pk(sk), r2), sk) = false.
+    
+fun pair(bitstring, bitstring):bitstring.
+reduc forall m: bitstring, n: bitstring; fst(pair(m,n)) = m.
+reduc forall m: bitstring, n: bitstring; snd(pair(m,n)) = n.
+
+
+
+event startid(id).
+event startcorid(id).
+event beginvote(id,vote).
+event endvote(vote).
+event newid(id).
+
+
+
+
+
+
+free pub:channel.
+free pubkey:channel.
+free cVotes:channel.
+
+let voterA(cid:channel, chVR:channel) =
+    in(pubkey, (pkKT:pkey, pkKR:spkey));
+    in(cid, i:id);
+    event startid(i);
+    in(chVR, c:cred);
+    let v = vA in
+    event beginvote(i, v);
+    new r1:nonce;
+    new r2:nonce;
+    new prof:pf;
+    out(pub, zk(c,r2,v,r1,mgenc_cred(c,pkKT,r2),mgenc_vote(v,pkKT,r1),pkKT,vA,vB,vC,prof)).
+    
+let voterB(cid:channel, chVR:channel) =
+    in(pubkey, (pkKT:pkey, pkKR:spkey));
+    in(cid, i:id);
+    event startid(i);
+    in(chVR, c:cred);
+    let v = vB in
+    event beginvote(i, v);
+    new r1:nonce;
+    new r2:nonce;
+    new prof:pf;
+    out(pub, zk(c,r2,v,r1,mgenc_cred(c,pkKT,r2),mgenc_vote(v,pkKT,r1),pkKT,vA,vB,vC,prof)).
+
+let voterC(cid:channel, chVR:channel) =
+    in(pubkey, (pkKT:pkey, pkKR:spkey));
+    in(cid, i:id);
+    event startid(i);
+    in(chVR, c:cred);
+    let v = vC in
+    event beginvote(i, v);
+    new r1:nonce;
+    new r2:nonce;
+    new prof:pf;
+    out(pub, zk(c,r2,v,r1,mgenc_cred(c,pkKT,r2),mgenc_vote(v,pkKT,r1),pkKT,vA,vB,vC,prof)).
+    
+    
+let corvoter(cid:channel, chVR:channel) =
+    in(cid, i:id);
+    event startcorid(i);
+    in(chVR, c:cred);
+    out(pub, c).
+    
+let identityissuer(cid:channel, chIR:channel) =
+    new vid:id;
+    event newid(vid);
+    out(cid,vid);
+    out(chIR,vid);
+    out(pub,vid).
+    
+
+let registrar(KR:sskey, chIR:channel, chVR:channel, chRT:channel) =
+    in(pubkey, (pkKT:pkey, pkKR:spkey));
+    in(chIR, i:id);
+    new c:cred;
+    new r:nonce;
+    out(chVR, c);
+    out(pub, sign(mgenc_cred(c, pkKT, r), KR));
+    out(chRT, mgenc_cred(c, pkKT, r)).
+    
+let tallier(KT:skey, chRT:channel) =
+    in(pub, zkproof:zkp);
+    (*if ver(proof,zkp) then*)
+    if public4(zkproof) = vA then
+    if public5(zkproof) = vB then
+    if public6(zkproof) = vC then
+    let encvote = public2(zkproof) in
+    let enccred = public1(zkproof) in
+    in(chRT, enccred1:bitstring);
+    if pet(enccred, enccred1, KT) then 
+    let ballot = mgdec_vote(encvote, KT) in
+    event endvote(ballot);
+    out(cVotes, ballot).
+    
+free cid:channel [private].
+
+(* Private channel between identity issuer and registrar *)
+free chIR:channel [ private ].
+
+(* Private channel between voter and registrar *)
+free chVR:channel [ private ].
+
+(* Private channel between tallier and registrar *)
+free chRT:channel [ private ].
+    
+    
+(* Inalterability *)
+query i:id, v:vote; inj-event (endvote(v)) ==>  (inj-event(startid(i)) ==>inj-event(beginvote(i,v))) || inj-event(startcorid(i)).
+
+(* Non-reusability *)
+query i:id, v:vote; inj-event (endvote(v)) ==>  ( (inj-event(beginvote(i,v)) ==>inj-event(startid(i)) ) && inj-event(newid(i)) ) || (inj-event(startcorid(i)) ==> inj-event(newid(i))).
+
+(* Eligibility *)
+query i:id; inj-event(startid(i)) ==> inj-event(newid(i)).
+query i:id; inj-event(startcorid(i)) ==> inj-event(newid(i)).
+
+process
+    new kT:skey;
+    new kR:sskey;
+
+    out(pubkey, (pk(kT), spk(kR)));
+    
+    ( (!voterA(cid, chVR)) | (!voterB(cid, chVR)) | (!voterC(cid, chVR)) | (!corvoter(cid, chVR)) | (!identityissuer(cid, chIR)) | (!registrar(kR, chIR, chVR, chRT)) | (!tallier(kT, chRT)) )
+    

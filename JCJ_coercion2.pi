@@ -1,0 +1,196 @@
+(* Functions *)
+
+fun check/2.
+fun zkver/1.
+fun public1/1.
+fun zk/2.
+data true/0.
+fun sign/2.
+fun decsign/2.
+fun verifysign/2.
+
+fun SK/1.
+fun VK/1.
+fun PK/1.
+
+fun equals/2.
+
+fun enc/3.
+fun dec/2.
+fun pet/3.
+
+
+(* Equational Theory *)
+
+equation equals(x,x) = true.
+
+equation dec(enc(x,PK(y),z), SK(y)) = x.
+
+equation decsign(sign(x,SK(y)), PK(y)) = x.
+equation verifysign(sign(x,SK(y)), x) = true.
+equation check(sign(x,y), VK(y)) = x.
+
+equation zkver(zk( (cred, r2, vote, r1), (enc(vote,PK(KT),r1), enc(cred,PK(KT),r2), PK(KT), va, vb, vc) )) = true.
+
+equation public1(zk(x,y)) = y.
+
+equation pet(enc(cred,PK(KT),r1), enc(cred,PK(KT),r2), KT) = true.
+
+
+(* Public Channel "Bulletin Board" *)
+free pub.
+
+(* Public Tally Report *)
+free cVotes.
+
+(* Private Channel used by voters to choose candidate *)
+private free chvote.
+private free c, chTE, chVE, internal1, internal.
+
+(* Candidate Slate 3 options *)
+free candA,candB,candC.
+
+(* Nonce Handshake Phase identifiers *)
+free n1,n2.
+
+
+let choosevote = 
+    out(chvote, candA) | out(chvote, candB) | out(chvote, candC).
+
+let voter =
+    in(cid, id);
+    new nonce1;
+    out(chVR, (n1,nonce1));
+    in(chVR, (=n2,=nonce1,cred));
+    in(chvote, vote);
+    new r1;
+    new r2;
+    out(pub, zk( (cred, r2, vote, r1), (enc(vote,PK(KT),r1), enc(cred,PK(KT),r2), PK(KT), candA, candB, candC) )).
+    
+    
+let corvoter =
+    in(cid, id);
+    new nonce1;
+    out(chVR, (n1,nonce1));
+    in(chVR, (=n2,=nonce1,cred));
+    out(pub, cred).
+ 
+let coercedvoter =
+    in(cid, id);
+    new nonce1;
+    out(chVR1, (n1,nonce1));
+    in(chVR1, (=n2,=nonce1,cred));
+    new fakecred;
+    out(c, choice[cred,fakecred]);
+    out(internal, (n2,cred,fakecred)).
+
+let voterreg =
+    new nonce;
+    out(chVR2,(n1,nonce));
+    in(chVR2,(=n2,=nonce,credI,credJ,credE));
+    out(internal1,(n2,credI,credJ,credE)).
+
+
+let votercast =
+    in(internal,(=n2,credI,fakecred));
+    in(internal1,(=n2,credI,credJ,credE));
+    out(chVE,choice[(credI,credI,credJ,credE),(fakecred,credI,credJ,credE)]);
+    new r1;
+    new r2;
+    out(pub, zk( (choice[credJ,credI], r2, candA, r1), (enc(candA,PK(KT),r1), enc(choice[credJ,credI],PK(KT),r2), PK(KT), candA, candB, candC) )).
+    
+
+
+let tallier =
+    new nonce;
+    out(chRT, (n1, nonce));
+    in(chRT, (=n2, =nonce, enccred));
+    in(pub, zkp);
+    if zkver(zkp) = true then
+    let (enccred1, encvote1, =PK(KT), =candA, =candB, =candC) = public1(zkp) in
+    if pet(enccred, enccred1, SK(KT)) = true then
+    let v = dec(encvote1, SK(KT)) in
+    event ENDVOTE(v);
+    out(cVotes, v).
+
+let registrar =
+    in(chIR, id);
+    in(chVR,(=n1,nonce_voter));
+    in(chRT,(=n1, nonce_tally));
+    new cred;
+    new r;
+    out(chVR, (n2, nonce_voter, cred));
+    out(pub, sign(enc(cred, PK(KT), r), SK(KR)));
+    out(chRT, (n2, nonce_tally, enc(cred, PK(KT), r))).
+
+let identityissuer =
+    new id;
+    out(cid, id);
+    out(chIR, id);
+    out(pub, id).
+
+let extractor =
+    in(cid, id);
+    new nonceE;
+    out(chVR3, (n1,nonceE));
+    in(chVR3, (=n2,=nonceE,credI,credJ,credE));
+    
+    in(chVE, (coercercred,=credI,=credJ,=credE));
+    !in(chTE, (=n1, encvote, enccred));
+    
+    new r1;
+    let encvA = enc(candA,PK(KT),r1) in
+    if true = equals((enccred,encvote), (coercercred,encvA)) then out(pub, va) else
+    if true = equals((enccred,encvote), (choice[credJ,credI],encvA)) then out(pub, va).
+
+
+let m_tallier = 
+    new nonce;
+    out(chcRT, (n1, nonce));
+    in(chcRT, (=n2, =nonce, enccred));
+    in(pub, zkp);
+    if zkver(zkp) = true then
+    let (enccred1, encvote1, =PK(KT), =candA, =candB, =candC) = public1(zkp) in
+    if pet(enccred, enccred1, SK(KT)) = true then
+    let v = dec(encvote1, SK(KT)) in
+    out(chTE,(n1,encvote1,enccred1));
+    out(cVotes, v).    
+
+let m_registrar =
+    in(cid, id);
+    in(chcRT, (=n1, nonceT1));
+    in(chcRT, (=n1, nonceT2));
+    in(chcRT, (=n1, nonceT3));
+    in(chVR1, (=n1, nonceV1));
+    in(chVR2, (=n1, nonceV2));
+    in(chVR3, (=n1, nonceE));
+    
+    new credI;
+    new credJ;
+    new credE;
+    new m;
+    
+    out(chcRT, (n2, nonceT1, enc(choice[credI,credE], PK(KT), r)));
+    out(chcRT, (n2, nonceT2, enc(choice[credJ,credI], PK(KT), r)));
+    out(chcRT, (n2, nonceT3, enc(choice[credE,credJ], PK(KT), r)));
+    
+    out(chVR1, (n2, nonceV1, credI));
+    out(chVR2, (n2, nonceV2, credI, credJ, credE));
+    out(chVR3, (n2, nonceE, credI, credJ, credE)).
+    
+    
+
+process new KR; new KT;
+    new voter;
+    new chVR;
+    new chVR1;
+    new chVR2;
+    new chVR3;
+    new cid;
+    new chIR;
+    new chRT;
+    new chcRT;
+    out(pub, PK(KR));
+    out(pub, PK(KT));
+    
+    ( !voter | !corvoter | !tallier | !registrar | !identityissuer | !choosevote | !m_tallier | m_registrar | votercast | voterreg | coercedvoter | extractor )

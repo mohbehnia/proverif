@@ -1,0 +1,21 @@
+(* Hello World Example for Observational Equivalence *)
+
+free cVotes: channel.
+free Barack: bitstring.
+free Donald: bitstring.
+
+(* Asymmetric Encryption *)
+type skey.
+type pkey.
+
+fun pk(skey): pkey.
+fun aenc(bitstring, pkey): bitstring.
+reduc forall m: bitstring, k: skey; adec(aenc(m, pk(k)),k) = m.
+
+process
+    new tallier_sk:skey;
+    let tallier_pk = pk(tallier_sk) in
+    let encBarack = aenc(Barack, tallier_pk) in
+    let encDonald = aenc(Donald, tallier_pk) in
+    out (cVotes, choice[encBarack, encDonald])
+    
