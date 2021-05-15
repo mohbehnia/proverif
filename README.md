@@ -11,4 +11,4 @@
 #### ``` JCJ_t.pv ```: pv implementation of soundness model, ZK proof model is not included
 #### ``` JCJ_soundness.pi ```: pi implementation of soundness model, ZK proof model included
 #### ``` JCJ_soundness_noPET.pi ```: tallier does not perform Plain-text Equivalence test (targets Inalterability and Non-reusability properties)
-#### ``` JCJ_coercion2.pi ```: pi implementation of coercion model
+#### ``` JCJ_coercion2.pi ```: pi implementation of coercion model for verifying 2nd Condition of Strong-Coercion Resistance
